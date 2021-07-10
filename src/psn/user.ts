@@ -1,49 +1,28 @@
-import fetch from "node-fetch";
+import fetch, { Headers } from "node-fetch";
+import { getAccess } from "~/auth";
 import { qs } from "~/helpers";
+import { USER_URL, FRIENDS_LIMIT } from "./constants";
+import { ApiError, ApiFriends, ApiProfile2 } from "./types";
 
-interface ApiUser {
-    onlineId: string;
-}
+export const apiUrl = (path: string, qs?: string) =>
+    `${USER_URL}/${path}${qs ? `?${qs}` : ""}`;
 
-interface ApiFriends {
-    profiles: ApiUser[];
-    start: number;
-    size: number;
-    totalResults: number;
-}
+export const userAuthHeader = async () =>
+    new Headers({
+        Authorization: `Bearer ${await getAccess()}`,
+    });
 
-interface ApiProfile2 {
-    profile: ApiUser & { currentOnlineId: string };
-}
-
-interface ApiError {
-    error: {
-        code: number;
-        message: string;
-    };
-}
-
-const apiUrl = (path: string, qs?: {}) =>
-    `https://nl-prof.np.community.playstation.net/userProfile/v1/users/${path}${
-        qs ? `?${qs}` : ""
-    }`;
-
-const apiFetch = <T>(path: string, query?: {}): Promise<T> => {
-    return fetch(apiUrl(path, qs(query)))
+export const apiUserFetch = <T>(path: string, query?: {}): Promise<T> =>
+    fetch(apiUrl(path, qs(query)))
         .then((res) => res.json())
-        .catch(({ error }: ApiError) => {
-            throw new Error(error.message);
-        });
-};
-
-const FRIENDS_LIMIT = 500;
+        .catch((e: ApiError) => Promise.reject(e.error.message));
 
 export const getFriends = async (
     userid: string,
     offset = 0,
     prevFriends: string[] = [],
 ): Promise<string[]> => {
-    const { profiles, size, totalResults } = await apiFetch<ApiFriends>(
+    const { profiles, size, totalResults } = await apiUserFetch<ApiFriends>(
         `${userid}/friends/profiles2`,
         {
             offset,
@@ -64,6 +43,6 @@ export const getFriends = async (
 };
 
 export const getCurrentOnlineId = (userid: string) =>
-    apiFetch<ApiProfile2>(`${userid}/profile2`).then(
+    apiUserFetch<ApiProfile2>(`${userid}/profile2`).then(
         ({ profile }) => profile.currentOnlineId,
     );

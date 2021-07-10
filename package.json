@@ -60,6 +60,7 @@
     "pg": "^8.6.0",
     "prettier": "^2.3.2",
     "sqlite3": "^5.0.2",
+    "ts-jest": "^27.0.3",
     "typeorm": "^0.2.29",
     "typescript": "4"
   },
