@@ -3,12 +3,12 @@ import { Auth, TokenType } from "~/db/entities/Auth";
 import { renewAccess, renewRefresh } from "~/psn/auth";
 
 const GRACE_TIMES = {
-    [TokenType.ACCESS]: Duration.fromObject({ minutes: 5 }),
-    [TokenType.REFRESH]: Duration.fromObject({ days: 7 }),
+    [TokenType.ACCESS]: Duration.fromObject({ minutes: -5 }),
+    [TokenType.REFRESH]: Duration.fromObject({ days: -7 }),
 };
 
-const hasExpired = (token: Auth) =>
-    DateTime.fromJSDate(token.expires).diffNow() <= GRACE_TIMES[token.type];
+export const hasExpired = (token: Auth): boolean =>
+    DateTime.fromJSDate(token.expires).diffNow() >= GRACE_TIMES[token.type];
 
 export const getAccess = async (): Promise<string> => {
     const accessToken = await Auth.getToken(TokenType.ACCESS);

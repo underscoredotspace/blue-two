@@ -8,7 +8,7 @@
     "start": "node ./dist",
     "lint": "eslint --ext=ts ./src",
     "test": "jest",
-    "test:watch": "jest --watch",
+    "test:watch": "jest --watch --coverage",
     "prepare": "husky install"
   },
   "license": "CC-BY-4.0",
