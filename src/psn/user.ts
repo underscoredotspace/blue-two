@@ -1,18 +1,22 @@
 import fetch, { Headers } from "node-fetch";
+import { ParsedUrlQueryInput } from "querystring";
 import { getAccess } from "~/auth";
 import { qs } from "~/helpers";
 import { USER_URL, FRIENDS_LIMIT } from "./constants";
 import { ApiError, ApiFriends, ApiProfile2 } from "./types";
 
-export const apiUrl = (path: string, qs?: string) =>
+export const apiUrl = (path: string, qs?: string): string =>
     `${USER_URL}/${path}${qs ? `?${qs}` : ""}`;
 
-export const userAuthHeader = async () =>
+export const userAuthHeader = async (): Promise<Headers> =>
     new Headers({
         Authorization: `Bearer ${await getAccess()}`,
     });
 
-export const apiUserFetch = <T>(path: string, query?: {}): Promise<T> =>
+export const apiUserFetch = <T>(
+    path: string,
+    query?: ParsedUrlQueryInput,
+): Promise<T> =>
     fetch(apiUrl(path, qs(query)))
         .then((res) => res.json())
         .catch((e: ApiError) => Promise.reject(e.error.message));
@@ -42,7 +46,7 @@ export const getFriends = async (
     return [...prevFriends, ...friends];
 };
 
-export const getCurrentOnlineId = (userid: string) =>
+export const getCurrentOnlineId = (userid: string): Promise<string> =>
     apiUserFetch<ApiProfile2>(`${userid}/profile2`).then(
         ({ profile }) => profile.currentOnlineId,
     );
