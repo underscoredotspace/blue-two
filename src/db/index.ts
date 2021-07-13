@@ -4,7 +4,7 @@ import * as entities from "./entities";
 
 const forEnvironment = env.DEV
     ? {
-          type: "sqlite",
+          type: "better-sqlite3",
           database: "./data/blue-two.sqlite",
       }
     : {
