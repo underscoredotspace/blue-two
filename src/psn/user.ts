@@ -1,4 +1,4 @@
-import fetch, { Headers } from "node-fetch";
+import fetch, { RequestInit } from "node-fetch";
 import { ParsedUrlQueryInput } from "querystring";
 import { getAccess } from "~/auth";
 import { qs } from "~/helpers";
@@ -8,16 +8,15 @@ import { ApiError, ApiFriends, ApiProfile2 } from "./types";
 export const apiUrl = (path: string, qs?: string): string =>
     `${USER_URL}/${path}${qs ? `?${qs}` : ""}`;
 
-export const userAuthHeader = async (): Promise<Headers> =>
-    new Headers({
-        Authorization: `Bearer ${await getAccess()}`,
-    });
+export const getUserOptions = async (): Promise<RequestInit> => ({
+    headers: { Authorization: `Bearer ${await getAccess()}` },
+});
 
-export const apiUserFetch = <T>(
+export const apiUserFetch = async <T>(
     path: string,
     query?: ParsedUrlQueryInput,
 ): Promise<T> =>
-    fetch(apiUrl(path, qs(query)))
+    fetch(apiUrl(path, qs(query)), await getUserOptions())
         .then((res) => res.json())
         .catch((e: ApiError) => Promise.reject(e.error.message));
 

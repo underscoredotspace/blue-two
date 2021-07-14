@@ -15,12 +15,19 @@ jest.mock("node-fetch");
 import fetch from "node-fetch";
 const mockFetch = fetch as unknown as jest.Mock;
 
-import { apiUrl, apiUserFetch, getFriends } from "./user";
+jest.mock("~/db/entities/Auth");
+jest.mock("~/auth", () => ({
+    getAccess: jest.fn().mockResolvedValue("access_token"),
+}));
+
+import * as user from "./user";
 
 describe("apiUrl", () => {
     beforeEach(() => {
         jest.clearAllMocks();
     });
+
+    const { apiUrl } = user;
 
     test("only url", () => {
         const result = apiUrl("something/123");
@@ -38,15 +45,21 @@ describe("apiFetch", () => {
         jest.clearAllMocks();
     });
 
-    test("make api request", async () => {
-        mockFetch.mockResolvedValueOnce({ json: () => "res" });
-        const options = { a: 1 };
-        mockQs.mockReturnValue("a=1");
-        const res = await apiUserFetch("path-b", options);
+    const { apiUserFetch } = user;
 
-        expect(mockFetch).toHaveBeenCalledWith("USER_URL/path-b?a=1");
-        expect(mockQs).toHaveBeenCalledWith(options);
+    test("make api request", async () => {
+        mockQs.mockReturnValueOnce("qs");
+        const userOptions = {};
+        const options = {};
+        mockFetch.mockResolvedValueOnce({ json: () => "res" });
+        const mockApiUrl = jest.spyOn(user, "apiUrl").mockReturnValue("apiUrl");
+        jest.spyOn(user, "getUserOptions").mockResolvedValueOnce(userOptions);
+
+        const res = await apiUserFetch("path-b", options);
         expect(res).toEqual("res");
+        expect(mockFetch).toHaveBeenCalledWith("apiUrl", userOptions);
+        expect(mockApiUrl).toHaveBeenCalledWith("path-b", "qs");
+        expect(mockQs).toHaveBeenCalledWith(options);
     });
 
     test("return error message when request fails", async () => {
@@ -70,6 +83,8 @@ describe("getFriends", () => {
         list.map((onlineId) => ({
             onlineId,
         }));
+
+    const { getFriends } = user;
 
     test("makes one request to friends", async () => {
         const profiles = makeFrendsRes("abc".split(""));
@@ -116,5 +131,21 @@ describe("getFriends", () => {
         expect(mockFetch).toHaveBeenCalledTimes(2);
         expect(mockQs).toHaveBeenNthCalledWith(1, { limit: 3, offset: 0 });
         expect(mockQs).toHaveBeenNthCalledWith(2, { limit: 3, offset: 3 });
+    });
+});
+
+describe("getCurrentOnlineId", () => {
+    beforeEach(() => {
+        jest.clearAllMocks();
+    });
+    test("requests currentOnlineId", async () => {
+        const mockApiUrl = jest.spyOn(user, "apiUrl").mockReturnValue("apiUrl");
+        mockFetch.mockResolvedValueOnce({
+            json: () => ({ profile: { currentOnlineId: "newUserId" } }),
+        });
+
+        const res = await user.getCurrentOnlineId("userid");
+        expect(res).toEqual("newUserId");
+        expect(mockApiUrl).toHaveBeenCalledWith("userid/profile2", undefined);
     });
 });
