@@ -22,37 +22,39 @@ jest.mock("~/auth", () => ({
 
 import * as user from "./user";
 
-describe("apiUrl", () => {
+describe("apiUserUrl", () => {
     beforeEach(() => {
         jest.clearAllMocks();
     });
 
-    const { apiUrl } = user;
+    const { apiUserUrl } = user;
 
     test("only url", () => {
-        const result = apiUrl("something/123");
+        const result = apiUserUrl("something/123");
         expect(result).toEqual("USER_URL/something/123");
     });
 
     test("url with querystring", () => {
-        const result = apiUrl("path-a", "querystring");
+        const result = apiUserUrl("path-a", "querystring");
         expect(result).toEqual("USER_URL/path-a?querystring");
     });
 });
 
-describe("apiFetch", () => {
+describe("apiUserFetch", () => {
     beforeEach(() => {
         jest.clearAllMocks();
     });
 
     const { apiUserFetch } = user;
 
-    test("make api request", async () => {
+    test("make user api request", async () => {
         mockQs.mockReturnValueOnce("qs");
         const userOptions = {};
         const options = {};
         mockFetch.mockResolvedValueOnce({ json: () => "res" });
-        const mockApiUrl = jest.spyOn(user, "apiUrl").mockReturnValue("apiUrl");
+        const mockApiUrl = jest
+            .spyOn(user, "apiUserUrl")
+            .mockReturnValue("apiUrl");
         jest.spyOn(user, "getUserOptions").mockResolvedValueOnce(userOptions);
 
         const res = await apiUserFetch("path-b", options);
@@ -139,7 +141,9 @@ describe("getCurrentOnlineId", () => {
         jest.clearAllMocks();
     });
     test("requests currentOnlineId", async () => {
-        const mockApiUrl = jest.spyOn(user, "apiUrl").mockReturnValue("apiUrl");
+        const mockApiUrl = jest
+            .spyOn(user, "apiUserUrl")
+            .mockReturnValue("apiUrl");
         mockFetch.mockResolvedValueOnce({
             json: () => ({ profile: { currentOnlineId: "newUserId" } }),
         });

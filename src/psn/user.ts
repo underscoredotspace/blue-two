@@ -3,9 +3,9 @@ import { ParsedUrlQueryInput } from "querystring";
 import { getAccess } from "~/auth";
 import { qs } from "~/helpers";
 import { USER_URL, FRIENDS_LIMIT } from "./constants";
-import { ApiError, ApiFriends, ApiProfile2 } from "./types";
+import { ApiUserError, ApiFriends, ApiProfile2 } from "./types";
 
-export const apiUrl = (path: string, qs?: string): string =>
+export const apiUserUrl = (path: string, qs?: string): string =>
     `${USER_URL}/${path}${qs ? `?${qs}` : ""}`;
 
 export const getUserOptions = async (): Promise<RequestInit> => ({
@@ -16,9 +16,9 @@ export const apiUserFetch = async <T>(
     path: string,
     query?: ParsedUrlQueryInput,
 ): Promise<T> =>
-    fetch(apiUrl(path, qs(query)), await getUserOptions())
+    fetch(apiUserUrl(path, qs(query)), await getUserOptions())
         .then((res) => res.json())
-        .catch((e: ApiError) => Promise.reject(e.error.message));
+        .catch((e: ApiUserError) => Promise.reject(e.error.message));
 
 export const getFriends = async (
     userid: string,

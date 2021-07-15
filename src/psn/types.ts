@@ -15,11 +15,20 @@ export interface ApiProfile2 {
     profile: ApiUser & { currentOnlineId: string };
 }
 
-export interface ApiError {
+export interface ApiAuthAccess {
+    access_token: string;
+    expires_in: number;
+}
+
+export interface ApiUserError {
     error: {
-        code: number;
         message: string;
     };
+}
+
+export interface ApiAuthError {
+    error: string;
+    error_description: string;
 }
 
 export interface NewToken {
