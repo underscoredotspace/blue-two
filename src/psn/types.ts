@@ -20,6 +20,11 @@ export interface ApiAuthAccess {
     expires_in: number;
 }
 
+export interface ApiAuthRefresh {
+    npsso: string;
+    expires_in: number;
+}
+
 export interface ApiUserError {
     error: {
         message: string;
