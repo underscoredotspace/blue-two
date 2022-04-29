@@ -18,7 +18,9 @@ export const apiUserFetch = async <T>(
 ): Promise<T> =>
     fetch(apiUserUrl(path, qs(query)), await getUserOptions())
         .then((res) => res.json())
-        .catch((e: ApiUserError) => Promise.reject(e.error.message));
+        .catch((e: ApiUserError) => {
+            throw e.error.message;
+        });
 
 export const getFriends = async (
     userid: string,
@@ -33,16 +35,13 @@ export const getFriends = async (
         },
     );
 
-    const friends = profiles.map((p) => p.onlineId);
+    const friends = prevFriends.concat(profiles.map((p) => p.onlineId));
 
     if (size + prevFriends.length < totalResults) {
-        return await getFriends(userid, (offset += FRIENDS_LIMIT), [
-            ...prevFriends,
-            ...friends,
-        ]);
+        return await getFriends(userid, (offset += FRIENDS_LIMIT), friends);
     }
 
-    return [...prevFriends, ...friends];
+    return friends;
 };
 
 export const getCurrentOnlineId = (userid: string): Promise<string> =>

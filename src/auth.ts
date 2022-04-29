@@ -3,8 +3,8 @@ import { Auth, TokenType } from "~/db/entities/Auth";
 import { renewAccess, renewRefresh } from "~/psn/auth";
 
 const GRACE_TIMES = {
-    [TokenType.ACCESS]: Duration.fromObject({ minutes: -5 }),
-    [TokenType.REFRESH]: Duration.fromObject({ days: -7 }),
+    [TokenType.ACCESS]: Duration.fromObject({ minutes: 5 }).negate(),
+    [TokenType.REFRESH]: Duration.fromObject({ days: 7 }).negate(),
 };
 
 export const hasExpired = (token: Auth): boolean =>
@@ -16,13 +16,9 @@ export const getAccess = async (): Promise<string> => {
         return accessToken.token;
     }
 
-    try {
-        const newAccess = await renewAccess();
-        await Auth.newToken(newAccess);
-        return newAccess.token;
-    } catch (error) {
-        throw new Error(error);
-    }
+    const newAccess = await renewAccess();
+    await Auth.newToken(newAccess);
+    return newAccess.token;
 };
 
 export const getRefresh = async (): Promise<string> => {
@@ -31,11 +27,23 @@ export const getRefresh = async (): Promise<string> => {
         return refreshToken.token;
     }
 
-    try {
-        const newRefresh = await renewRefresh();
-        await Auth.newToken(newRefresh);
-        return newRefresh.token;
-    } catch (error) {
-        throw new Error(error);
+    if (!refreshToken) {
+        throw "Refresh token missing from database";
     }
+
+    const newRefresh = await renewRefresh();
+    await Auth.newToken(newRefresh);
+    return newRefresh.token;
+};
+
+export const saveRefresh = async (token: string): Promise<void> => {
+    await Auth.newToken({
+        token,
+        expires: DateTime.now()
+            .plus(Duration.fromObject({ minutes: 5 }))
+            .toJSDate(),
+        type: TokenType.REFRESH,
+    });
+    const newToken = await renewRefresh(token);
+    await Auth.newToken(newToken);
 };

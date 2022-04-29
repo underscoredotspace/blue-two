@@ -1,17 +1,17 @@
 {
-    "extends": "@tsconfig/node14/tsconfig.json",
-    "compilerOptions": {
-        "noImplicitAny": false,
-        "outDir": "dist",
-        "experimentalDecorators": true,
-        "emitDecoratorMetadata": true,
-        "strictPropertyInitialization": false,
+  "extends": "@tsconfig/node16/tsconfig.json",
+  "compilerOptions": {
+    "noImplicitAny": false,
+    "outDir": "dist",
+    "experimentalDecorators": true,
+    "emitDecoratorMetadata": true,
+    "strictPropertyInitialization": false,
 
-        "baseUrl": "./src",
-        "paths": {
-            "~/*": ["./*"]
-        }
-    },
-    "include": ["src/**/*.ts"],
-    "exclude": ["node_modules/**"]
+    "baseUrl": "./src",
+    "paths": {
+      "~/*": ["./*"]
+    }
+  },
+  "include": ["src/**/*.ts"],
+  "exclude": ["node_modules/**"]
 }
