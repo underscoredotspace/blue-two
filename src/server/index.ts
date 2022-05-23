@@ -1,5 +1,6 @@
 import express from "express";
-import { saveRefresh } from "~/auth";
+import { DateTime, Duration } from "luxon";
+import { getRefresh, nearExpiry, saveRefresh } from "~/auth";
 import { env } from "~/helpers";
 import { getCurrentOnlineId, getFriends } from "~/psn";
 const server = express();
@@ -30,13 +31,30 @@ server.get("/current-id/:userid", async (req, res) => {
     }
 });
 
+server.get("/check-refresh", async (req, res) => {
+    try {
+        const refresh = await getRefresh();
+        res.json({ nearExpiry: nearExpiry(refresh), expires: refresh.expires });
+    } catch (error) {
+        res.status(500).send(error);
+    }
+});
+
 server.post("/save-refresh", async (req, res) => {
-    const { npsso } = req.body;
-    if (!npsso) {
-        return res.sendStatus(400); // bad request
+    const { npsso, expires_in } = req.body;
+    if (!npsso || !expires_in) {
+        return res.status(400).send("'npsso' and 'expires_in' required"); // bad request
     }
 
-    await saveRefresh(npsso)
+    if (Number.isNaN(Number(expires_in))) {
+        return res.status(400).send("'expires_in' is invalid"); // bad request
+    }
+
+    const expires = DateTime.now().plus(
+        Duration.fromObject({ seconds: Number(expires_in) }),
+    );
+
+    await saveRefresh(npsso, expires)
         .then(() => res.sendStatus(200))
         .catch((error) => res.status(500).send(error));
 });

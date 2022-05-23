@@ -1,18 +1,25 @@
-import { Duration, DateTime } from "luxon";
+import { DateTime } from "luxon";
 import { Auth, TokenType } from "~/db/entities/Auth";
-import { renewAccess, renewRefresh } from "~/psn/auth";
+import { renewAccess } from "~/psn/auth";
 
-const GRACE_TIMES = {
-    [TokenType.ACCESS]: Duration.fromObject({ minutes: 5 }).negate(),
-    [TokenType.REFRESH]: Duration.fromObject({ days: 7 }).negate(),
-};
+const graceTime = (type: TokenType) =>
+    ({
+        [TokenType.ACCESS]: DateTime.now().minus({ minutes: 5 }),
+        [TokenType.REFRESH]: DateTime.now().minus({ days: 7 }),
+    }[type]);
+
+export const nearExpiry = (token: Auth): boolean =>
+    DateTime.fromJSDate(new Date(token.expires))
+        .diff(graceTime(token.type))
+        .toMillis() >= 0;
 
 export const hasExpired = (token: Auth): boolean =>
-    DateTime.fromJSDate(token.expires).diffNow() >= GRACE_TIMES[token.type];
+    DateTime.fromJSDate(new Date(token.expires)).diffNow().toMillis() >= 0;
 
 export const getAccess = async (): Promise<string> => {
     const accessToken = await Auth.getToken(TokenType.ACCESS);
-    if (accessToken && !hasExpired(accessToken)) {
+
+    if (accessToken && !nearExpiry(accessToken)) {
         return accessToken.token;
     }
 
@@ -21,29 +28,27 @@ export const getAccess = async (): Promise<string> => {
     return newAccess.token;
 };
 
-export const getRefresh = async (): Promise<string> => {
+export const getRefresh = async (): Promise<Auth> => {
     const refreshToken = await Auth.getToken(TokenType.REFRESH);
-    if (refreshToken && !hasExpired(refreshToken)) {
-        return refreshToken.token;
-    }
 
     if (!refreshToken) {
         throw "Refresh token missing from database";
     }
 
-    const newRefresh = await renewRefresh();
-    await Auth.newToken(newRefresh);
-    return newRefresh.token;
+    if (hasExpired(refreshToken)) {
+        throw "Refresh token has expired";
+    }
+
+    return refreshToken;
 };
 
-export const saveRefresh = async (token: string): Promise<void> => {
+export const saveRefresh = async (
+    token: string,
+    expires: DateTime,
+): Promise<void> => {
     await Auth.newToken({
         token,
-        expires: DateTime.now()
-            .plus(Duration.fromObject({ minutes: 5 }))
-            .toJSDate(),
+        expires: expires.toJSDate(),
         type: TokenType.REFRESH,
     });
-    const newToken = await renewRefresh(token);
-    await Auth.newToken(newToken);
 };

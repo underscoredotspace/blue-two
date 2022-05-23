@@ -15,25 +15,35 @@ export const getUserOptions = async (): Promise<RequestInit> => ({
 export const apiUserFetch = async <T>(
     path: string,
     query?: ParsedUrlQueryInput,
-): Promise<T> =>
-    fetch(apiUserUrl(path, qs(query)), await getUserOptions())
-        .then((res) => res.json())
+): Promise<T> => {
+    const url = apiUserUrl(path, qs(query));
+    const options = await getUserOptions();
+
+    return fetch(url, options)
+        .then(async (res) => {
+            const json = await res.json();
+            if (json.error) {
+                throw json;
+            }
+
+            return json;
+        })
         .catch((e: ApiUserError) => {
             throw e.error.message;
         });
+};
 
 export const getFriends = async (
     userid: string,
     offset = 0,
     prevFriends: string[] = [],
 ): Promise<string[]> => {
-    const { profiles, size, totalResults } = await apiUserFetch<ApiFriends>(
-        `${userid}/friends/profiles2`,
-        {
-            offset,
-            limit: FRIENDS_LIMIT,
-        },
-    );
+    const res = await apiUserFetch<ApiFriends>(`${userid}/friends/profiles2`, {
+        offset,
+        limit: FRIENDS_LIMIT,
+    });
+
+    const { profiles, size, totalResults } = res;
 
     const friends = prevFriends.concat(profiles.map((p) => p.onlineId));
 

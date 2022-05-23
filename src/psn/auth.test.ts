@@ -5,9 +5,6 @@ jest.mock("./constants", () => ({
     get AUTH_ACCESS_BODY() {
         return "AUTH_ACCESS_BODY";
     },
-    get AUTH_REFRESH_BODY() {
-        return { yep: "AUTH_REFRESH_BODY" };
-    },
 }));
 
 jest.mock("node-fetch");
@@ -23,18 +20,9 @@ jest.mock("~/db/entities/Auth", () => ({
     },
 }));
 
-jest.mock("~/db/entities/Cookie", () => ({
-    Cookie: {
-        retrieve: jest.fn().mockResolvedValue(""),
-        store: jest.fn().mockResolvedValue([]),
-    },
-}));
-
 jest.mock("~/auth", () => ({
-    getRefresh: jest.fn().mockResolvedValue("refresh_token"),
+    getRefresh: jest.fn().mockResolvedValue({ token: "refresh_token" }),
 }));
-
-Date.now = jest.fn(() => new Date(Date.UTC(2017, 1, 14, 12, 0, 0)).valueOf());
 
 import * as auth from "./auth";
 
@@ -75,7 +63,7 @@ describe("apiAuthFetch", () => {
         expect(auth.apiAuthUrl).toHaveBeenCalledWith("path");
     });
 
-    test("should return error", () => {
+    test("should return formatted API error", () => {
         mockFetch.mockRejectedValueOnce({
             error: "invalid_client",
             error_description: "Bad client credentials",
@@ -87,6 +75,25 @@ describe("apiAuthFetch", () => {
             error_description: "Bad client credentials",
         });
     });
+
+    test("should return error if doesn't fit format", () => {
+        const error = {};
+        mockFetch.mockRejectedValueOnce(error);
+
+        return expect(apiAuthFetch("", {})).rejects.toEqual(error);
+    });
+
+    test("should return error if response not in 2xx", () => {
+        mockFetch.mockResolvedValueOnce({
+            status: 400,
+            statusText: "Bad request",
+        });
+
+        return expect(apiAuthFetch("", {})).rejects.toEqual({
+            error: 400,
+            error_description: "Bad request",
+        });
+    });
 });
 
 describe("renewAccess", () => {
@@ -94,6 +101,9 @@ describe("renewAccess", () => {
 
     beforeEach(() => {
         jest.clearAllMocks();
+        jest.useFakeTimers().setSystemTime(
+            new Date("2017-02-14T12:00:00.000Z"),
+        );
     });
 
     test("should return access", async () => {
@@ -122,45 +132,5 @@ describe("renewAccess", () => {
         jest.spyOn(auth, "apiAuthFetch").mockRejectedValueOnce(error);
 
         return expect(renewAccess()).rejects.toEqual(error);
-    });
-});
-
-describe("renewRefresh", () => {
-    const { renewRefresh } = auth;
-
-    beforeEach(() => {
-        jest.clearAllMocks();
-    });
-
-    test("should return refresh", async () => {
-        // const mockApiAuthFetch = jest
-        //     .spyOn(auth, "apiAuthFetch")
-        //     .mockResolvedValueOnce({
-        //         npsso: "new_npsso",
-        //         expires_in: 5184000,
-        //     });
-
-        mockGetToken.mockResolvedValueOnce({ token: "existing_token" });
-
-        const result = await renewRefresh();
-
-        expect(result).toEqual({
-            expires: new Date("2017-04-15T12:00:00.000Z"),
-            token: "new_npsso",
-            type: "npsso",
-        });
-        // expect(mockApiAuthFetch).toHaveBeenCalledWith("ssocookie", {
-        //     body: {
-        //         yep: "AUTH_REFRESH_BODY",
-        //         npsso: "existing_token",
-        //     },
-        // });
-    });
-
-    test("should return error", () => {
-        const error = {};
-        jest.spyOn(auth, "apiAuthFetch").mockRejectedValueOnce(error);
-
-        return expect(renewRefresh("")).rejects.toEqual(error);
     });
 });
