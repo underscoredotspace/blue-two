@@ -8,6 +8,7 @@ interface Environment {
 }
 
 const env = {
+    ...process.env,
     ...config().parsed,
     DEV: process.env.NODE_ENV !== "production",
 } as unknown as Environment;
