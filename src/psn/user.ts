@@ -8,9 +8,10 @@ import { ApiUserError, ApiFriends, ApiProfile2 } from "./types";
 export const apiUserUrl = (path: string, qs?: string): string =>
     `${USER_URL}/${path}${qs ? `?${qs}` : ""}`;
 
-export const getUserOptions = async (): Promise<RequestInit> => ({
-    headers: { Authorization: `Bearer ${await getAccess()}` },
-});
+export const getUserOptions = async (): Promise<RequestInit> =>
+    getAccess().then(({ token }) => ({
+        headers: { Authorization: `Bearer ${token}` },
+    }));
 
 export const apiUserFetch = async <T>(
     path: string,

@@ -1,6 +1,6 @@
 import express from "express";
 import { DateTime, Duration } from "luxon";
-import { getRefresh, nearExpiry, saveRefresh } from "~/auth";
+import { getAccess, getRefresh, nearExpiry, saveRefresh } from "~/auth";
 import { env } from "~/helpers";
 import { getCurrentOnlineId, getFriends } from "~/psn";
 const server = express();
@@ -40,6 +40,15 @@ server.get("/check-refresh", async (req, res) => {
     }
 });
 
+server.get("/check-access", async (req, res) => {
+    try {
+        const access = await getAccess();
+        res.json({ nearExpiry: nearExpiry(access), expires: access.expires });
+    } catch (error) {
+        res.status(500).send(error);
+    }
+});
+
 server.post("/save-refresh", async (req, res) => {
     const { npsso, expires_in } = req.body;
     if (!npsso || !expires_in) {
@@ -50,7 +59,7 @@ server.post("/save-refresh", async (req, res) => {
         return res.status(400).send("'expires_in' is invalid"); // bad request
     }
 
-    const expires = DateTime.now().plus(
+    const expires = DateTime.utc().plus(
         Duration.fromObject({ seconds: Number(expires_in) }),
     );
 
