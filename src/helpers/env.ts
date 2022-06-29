@@ -3,7 +3,7 @@ import { config } from "dotenv";
 interface Environment {
     PSN_PASSWORD: string;
     POSTGRES: string;
-    PORT: number;
+    PORT?: number;
     DEV: boolean;
 }
 
@@ -14,8 +14,8 @@ const env = {
 } as unknown as Environment;
 
 const required: (keyof Environment | null)[] = [
-    "PSN_PASSWORD",
-    "PORT",
+    // "PSN_PASSWORD",
+    // "PORT",
     env.DEV ? null : "POSTGRES",
 ];
 
