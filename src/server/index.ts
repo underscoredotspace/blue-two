@@ -1,6 +1,7 @@
 import express from "express";
 import { DateTime, Duration } from "luxon";
 import { getAccess, getRefresh, nearExpiry, saveRefresh } from "~/auth";
+import { Dodgy } from "~/db/entities";
 import { env } from "~/helpers";
 import { getCurrentOnlineId, getFriends } from "~/psn";
 const server = express();
@@ -14,6 +15,20 @@ server.get("/friends/:userid", async (req, res) => {
     try {
         const friends = await getFriends(userid);
         res.json({ friends });
+    } catch (error) {
+        res.status(500).json({ error });
+    }
+});
+
+server.get("/check/:userid", async (req, res) => {
+    const { userid } = req.params;
+    // validate userid?
+
+    try {
+        const friends = await getFriends(userid);
+        const dodgy = await Dodgy.get(friends);
+
+        res.json({ friends, dodgy });
     } catch (error) {
         res.status(500).json({ error });
     }
