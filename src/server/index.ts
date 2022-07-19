@@ -1,4 +1,4 @@
-import express from "express";
+import express, { RequestHandler } from "express";
 import { DateTime, Duration } from "luxon";
 import { getAccess, getRefresh, nearExpiry, saveRefresh } from "~/auth";
 import { Dodgy } from "~/db/entities";
@@ -8,9 +8,30 @@ const server = express();
 
 server.use(express.json());
 
-server.get("/friends/:userid", async (req, res) => {
+const validatePSN: RequestHandler = (req, res, next) => {
     const { userid } = req.params;
-    // validate userid?
+
+    /* 
+        must start with a letter
+        contain only letters, numbers, underscore, hyphen
+        3-16 chars long
+    */
+
+    const VALID_PSN = /^[a-zA-Z]{1,1}[a-zA-Z0-9_-]{2,15}$/;
+
+    if (!VALID_PSN.test(userid)) {
+        return res.status(400).json({ error: "Invalid PSN provided" });
+    }
+
+    next();
+};
+
+server.get("/validate/:userid", validatePSN, (req, res) => {
+    res.status(200).json({ userid: req.params.userid });
+});
+
+server.get("/friends/:userid", validatePSN, async (req, res) => {
+    const { userid } = req.params;
 
     try {
         const friends = await getFriends(userid);
@@ -20,13 +41,18 @@ server.get("/friends/:userid", async (req, res) => {
     }
 });
 
-server.get("/check/:userid", async (req, res) => {
+server.get("/check/:userid", validatePSN, async (req, res) => {
     const { userid } = req.params;
-    // validate userid?
 
     try {
+        const isDodgy = await Dodgy.checkOne(userid);
+
+        if (isDodgy) {
+            throw `is dodgy`;
+        }
+
         const friends = await getFriends(userid);
-        const dodgy = await Dodgy.get(friends);
+        const dodgy = await Dodgy.checkMany(friends);
 
         res.json({ friends, dodgy });
     } catch (error) {
@@ -34,9 +60,8 @@ server.get("/check/:userid", async (req, res) => {
     }
 });
 
-server.get("/current-id/:userid", async (req, res) => {
+server.get("/current-id/:userid", validatePSN, async (req, res) => {
     const { userid } = req.params;
-    // validate userid?
 
     try {
         const currentOnlineId = await getCurrentOnlineId(userid);
