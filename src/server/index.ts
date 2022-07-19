@@ -1,7 +1,7 @@
 import express, { RequestHandler } from "express";
 import { DateTime, Duration } from "luxon";
 import { getAccess, getRefresh, nearExpiry, saveRefresh } from "~/auth";
-import { Dodgy } from "~/db/entities";
+// import { Dodgy } from "~/db/entities";
 import { env } from "~/helpers";
 import { getCurrentOnlineId, getFriends } from "~/psn";
 const server = express();
@@ -41,24 +41,24 @@ server.get("/friends/:userid", validatePSN, async (req, res) => {
     }
 });
 
-server.get("/check/:userid", validatePSN, async (req, res) => {
-    const { userid } = req.params;
+// server.get("/check/:userid", validatePSN, async (req, res) => {
+//     const { userid } = req.params;
 
-    try {
-        const isDodgy = await Dodgy.checkOne(userid);
+//     try {
+//         const isDodgy = await Dodgy.checkOne(userid);
 
-        if (isDodgy) {
-            throw `is dodgy`;
-        }
+//         if (isDodgy) {
+//             throw `is dodgy`;
+//         }
 
-        const friends = await getFriends(userid);
-        const dodgy = await Dodgy.checkMany(friends);
+//         const friends = await getFriends(userid);
+//         const dodgy = await Dodgy.checkMany(friends);
 
-        res.json({ friends, dodgy });
-    } catch (error) {
-        res.status(500).json({ error });
-    }
-});
+//         res.json({ friends, dodgy });
+//     } catch (error) {
+//         res.status(500).json({ error });
+//     }
+// });
 
 server.get("/current-id/:userid", validatePSN, async (req, res) => {
     const { userid } = req.params;

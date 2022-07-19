@@ -1,4 +1,9 @@
 import "module-alias/register";
-import "./server";
 import { ensureConnection } from "./db";
-ensureConnection();
+// import { Dodgy } from "./db/entities";
+
+ensureConnection().then(() => import("./server"));
+// .then(() => {
+//     Dodgy.checkOne("sioqn").then(console.log);
+//     Dodgy.checkMany(["spoopymee", "sioqn"]).then(console.log);
+// });

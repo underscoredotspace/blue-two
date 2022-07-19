@@ -5,9 +5,19 @@ export class Dodgy extends BaseEntity {
     @PrimaryColumn()
     psn: string;
 
-    static async get(friends: string[]): Promise<string[]> {
-        const dodgy = await this.find({ where: { psn: In(friends) } });
+    static async checkMany(friends: string[]): Promise<string[]> {
+        const dodgy = await this.find({
+            where: { psn: In(friends) },
+        });
 
-        return dodgy.map(({ psn }) => psn);
+        console.log("dodgy", dodgy);
+
+        return (dodgy ?? []).map(({ psn }) => psn);
+    }
+
+    static async checkOne(psn: string): Promise<boolean> {
+        const dodgy = await this.findOne({ where: { psn } });
+
+        return Boolean(dodgy);
     }
 }
