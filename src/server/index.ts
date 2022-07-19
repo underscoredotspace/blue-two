@@ -20,15 +20,11 @@ const validatePSN: RequestHandler = (req, res, next) => {
     const VALID_PSN = /^[a-zA-Z]{1,1}[a-zA-Z0-9_-]{2,15}$/;
 
     if (!VALID_PSN.test(userid)) {
-        return res.status(400).json({ error: "Invalid PSN provided" });
+        return res.status(400).json({ error: "Invalid PSN provided [server]" });
     }
 
     next();
 };
-
-server.get("/validate/:userid", validatePSN, (req, res) => {
-    res.status(200).json({ userid: req.params.userid });
-});
 
 server.get("/friends/:userid", validatePSN, async (req, res) => {
     const { userid } = req.params;
