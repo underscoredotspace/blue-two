@@ -74,6 +74,16 @@ describe("apiUserFetch", () => {
 
         await expect(apiUserFetch("path-b")).rejects.toMatch(error.message);
     });
+
+    test("return error message when API returns valid error", async () => {
+        const error = {
+            message: "error",
+        };
+
+        mockFetch.mockResolvedValueOnce({ json: async () => ({ error }) });
+
+        await expect(apiUserFetch("path-b")).rejects.toEqual("error");
+    });
 });
 
 describe("getFriends", () => {

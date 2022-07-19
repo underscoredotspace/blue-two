@@ -4,9 +4,15 @@
             "name": "blue-two",
             "script": "npm",
             "args": "start",
+            "post_update": ["npm i"],
             "env": {
-                "NODE_ENV": "production"
-            }
+                "NODE_ENV": "production",
+                "PORT": 3002
+            },
+            "ignore_watch": ["node_modules"],
+            "watch": true,
+            "max_restarts": 3,
+            "restart_delay": 5000
         }
     ]
 }
